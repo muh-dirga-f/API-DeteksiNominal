@@ -23,7 +23,7 @@ for template_file in template_files:
     tmp = cv2.blur(tmp, (3, 3))  # smoothing
     tmp = cv2.Canny(tmp, 50, 200)  # Edge with Canny
     nominal = template_file.replace('template/', '').replace('.jpg', '')
-    template_data.append({"glob":tmp, "nominal":nominal})
+    template_data.append({"glob": tmp, "nominal": nominal})
 
 
 #API
@@ -31,9 +31,10 @@ for template_file in template_files:
 def index():
     return 'Welcome to Uang Matching API!'
 
+
 @app.route('/process_image', methods=['POST'])
 def process_image():
-	  # ambil gambar yang di post
+    # ambil gambar yang di post
     data = request.get_json()
     img_base64 = data['image']
     img_bytes = base64.b64decode(img_base64)
@@ -46,21 +47,21 @@ def process_image():
         image_test_p = cv2.Canny(image_test_p, 50, 200)
         (tmp_height, tmp_width) = template['glob'].shape[:2]
         found = None
-        thershold = 0.4
+        threshold = 0.4
         for scale in np.linspace(0.2, 1.0, 20)[::-1]:
-            # scalling uang
+            # scaling uang
             resized = imutils.resize(
                 image_test_p, width=int(image_test_p.shape[1] * scale))
             r = image_test_p.shape[1] / float(resized.shape[1])
 
             if resized.shape[0] < tmp_height or resized.shape[1] < tmp_width:
                 break
-            # proses template matching antara "data template" dengan data yang "di post(data test)""
+            # proses template matching antara "data template" dengan data yang "di post(data test)"
             result = cv2.matchTemplate(resized, template['glob'], cv2.TM_CCOEFF_NORMED)
             (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
             if found is None or maxVal > found[0]:
                 found = (maxVal, maxLoc, r)
-                if maxVal >= thershold:
+                if maxVal >= threshold:
                     image_result = {}
                     image_result["nominal"] = template['nominal']
                     image_result["match_score"] = maxVal
@@ -70,6 +71,7 @@ def process_image():
 
     # output
     return jsonify({"result": result_data})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
